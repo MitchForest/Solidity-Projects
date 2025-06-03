@@ -1,0 +1,12 @@
+1. [] TokenSale
+2. [] BasicBankERC20
+3. [] PaymentSplitter
+4. [] DecimalSwap
+5. [] WeeklySalary
+6. [] UniswapV2StyleDeposit
+7. [] WETH
+8. [] LinearVest
+9. [] TokenWrapper
+10. [] OraclePool
+11. [] LinearDutchAuction1
+12. [] Crowdfunding 
