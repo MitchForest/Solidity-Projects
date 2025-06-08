@@ -22,6 +22,7 @@ contract WeeklySalary is Ownable2Step {
     using SafeERC20 for ERC20;
 
     constructor(address tokenAddress) Ownable(msg.sender) {
+        token = ERC20(tokenAddress);
     }
 
     struct Contractor {
@@ -43,14 +44,56 @@ contract WeeklySalary is Ownable2Step {
     error InsufficientBalance();
 
     function createContractor(address _contractor, uint256 _weeklySalary) external onlyOwner {
+        if (contractors[_contractor].weeklySalary > 0) revert ContractorAlreadyExists();
+        if (_contractor == address(0)) revert InvalidContractorAddress();
+        if (_weeklySalary == 0) revert InvalidWeeklySalary();
+
+        contractors[_contractor] = Contractor(_weeklySalary, block.timestamp);
+        emit ContractorCreated(_contractor, _weeklySalary);
+
+        // 1. Check contractor is not already in the mapping (ContractorAlreadyExists)
+        // 2. Check contractor is not the zero address (InvalidContractorAddress)
+        // 3. Check weekly salary is greater than 0 (InvalidWeeklySalary)
+        // 4. Add contractor to the mapping (contractors[_contractor] = Contractor(_weeklySalary, block.timestamp))
+        // 5. Emit ContractorCreated event
     }
 
     function deleteContractor(address _contractor) external onlyOwner {
+        if (contractors[_contractor].weeklySalary == 0) revert InvalidContractorAddress();
+
+        delete contractors[_contractor];
+        emit ContractorDeleted(_contractor);
+
+        // 1. Check contractor is in the mapping ("Contractor not found")
+        // 2. Delete contractor from the mapping (delete contractors[_contractor])
+        // 3. Emit ContractorDeleted event
     }
 
     /*
      * @dev if the balance of the contract is not sufficient, the function will revert
      */
     function withdraw() external {
+        if (contractors[msg.sender].weeklySalary == 0) revert InvalidContractorAddress();
+
+        uint256 weeksElapsed = (block.timestamp - contractors[msg.sender].lastWithdrawal) / 1 weeks;
+        if (weeksElapsed == 0) return;
+
+        uint256 amount = contractors[msg.sender].weeklySalary * weeksElapsed;
+
+        if (token.balanceOf(address(this)) < amount) revert InsufficientBalance();
+
+        contractors[msg.sender].lastWithdrawal = block.timestamp;
+
+        token.safeTransfer(msg.sender, amount);
+        emit Withdrawal(msg.sender, amount);
+
+        // 1. Check contractor is in the mapping ("Contractor not found")
+        // 2. Calculate weeks elapsed = (block.timestamp - lastWithdrawal) / 1 weeks
+        // 3. If weeksElapsed == 0, return 0 (no withdrawal, no revert)
+        // 4. Calculate amount = weeklySalary * weeksElapsed  
+        // 5. Check contract balance >= amount (InsufficientBalance)
+        // 6. Update lastWithdrawal = block.timestamp
+        // 7. Transfer tokens (token.safeTransfer(msg.sender, amount))
+        // 8. Emit Withdrawal event
     }
 }

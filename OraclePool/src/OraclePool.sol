@@ -32,6 +32,12 @@ contract OraclePool is Ownable2Step {
         address _stablecoin,
         uint256 _feeBasisPoints,
         uint256 _ethToUSDRate) Ownable(msg.sender) {
+        WETH = IERC20(_weth);
+        STABLECOIN = IERC20(_stablecoin);
+        feeBasisPoints = _feeBasisPoints;
+        ethToUSDRate = _ethToUSDRate;
+
+        // Initialize the ERC20 contracts with the WETH and stablecoin addresses and the fee basis points and the ETH to USD rate
     }
 
     /*
@@ -44,6 +50,25 @@ contract OraclePool is Ownable2Step {
      * @return amountOut The amount of WETH the user received.
      */
     function buyWETH(uint256 amountStableIn, uint256 amountOutMin) external returns (uint256 amountOut) {
+
+        STABLECOIN.safeTransferFrom(msg.sender, address(this), amountStableIn);
+        uint256 amountWethOut = amountStableIn * 1e20 / ethToUSDRate;
+        uint256 fee = amountWethOut * feeBasisPoints / 10000;
+        amountWethOut -= fee;
+        if (amountWethOut < amountOutMin) revert Slippage();
+        if (WETH.balanceOf(address(this)) < amountWethOut) revert InsufficientReserves();
+        WETH.safeTransfer(msg.sender, amountWethOut);
+        emit SwapStableToWeth(msg.sender, amountStableIn, amountWethOut);
+        
+        return amountWethOut;
+
+        // 1. Transfer stablecoin from user to contract
+        // 2. Calculate amount of WETH to give (based on exchange rate)
+        // 3. Apply fee to WETH amount
+        // 4. Check slippage protection (amountOut >= amountOutMin)
+        // 5. Check contract has enough WETH reserves
+        // 6. Transfer WETH to user
+        // 7. Emit SwapStableToWeth event
     }
 
     /* 
@@ -56,8 +81,36 @@ contract OraclePool is Ownable2Step {
      * @return amountOut The amount of stablecoin the user received.
      */
     function sellWETH(uint256 amountWethIn, uint256 amountOutMin) external returns (uint256 amountOut) {
+
+        WETH.safeTransferFrom(msg.sender, address(this), amountWethIn);
+        uint256 amountStableOut = amountWethIn * ethToUSDRate / 1e20;
+        uint256 fee = amountStableOut * feeBasisPoints / 10000;
+        amountStableOut -= fee;
+        if (amountStableOut < amountOutMin) revert Slippage();
+        if (STABLECOIN.balanceOf(address(this)) < amountStableOut) revert InsufficientReserves();
+        STABLECOIN.safeTransfer(msg.sender, amountStableOut);
+        emit SwapWethToStable(msg.sender, amountWethIn, amountStableOut);
+        
+        return amountStableOut;
+
+        // 1. Transfer WETH from user to contract
+        // 2. Calculate amount of stablecoin to give (based on exchange rate)
+        // 3. Apply fee to stablecoin amount
+        // 4. Check slippage protection (amountOut >= amountOutMin)
+        // 5. Check contract has enough stablecoin reserves
+        // 6. Transfer stablecoin to user
+        // 7. Emit SwapWethToStable event
     }
 
     function setExchangeRate(uint256 _ethToUSDRate) external onlyOwner {
+
+        uint256 oldRate = ethToUSDRate;
+        ethToUSDRate = _ethToUSDRate;
+
+        emit ExchangeRateUpdated(oldRate, _ethToUSDRate);
+
+        // 1. Store old rate for event
+        // 2. Update ethToUSDRate with new value
+        // 3. Emit ExchangeRateUpdated event 
     }
 }

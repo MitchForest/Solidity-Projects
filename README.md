@@ -1,12 +1,12 @@
-1. [] TokenSale
-2. [] BasicBankERC20
-3. [] PaymentSplitter
-4. [] DecimalSwap
-5. [] WeeklySalary
-6. [] UniswapV2StyleDeposit
-7. [] WETH
-8. [] LinearVest
-9. [] TokenWrapper
-10. [] OraclePool
-11. [] LinearDutchAuction1
+1. [X] TokenSale
+2. [x] BasicBankERC20
+3. [x] PaymentSplitter
+4. [x] DecimalSwap
+5. [x] WeeklySalary
+6. [x] UniswapV2StyleDeposit
+7. [x] WETH
+8. [x] LinearVest - had some difficulty with this one but kept working from failed test
+9. [x] TokenWrapper
+10. [x] OraclePool
+11. [x] LinearDutchAuction1
 12. [] Crowdfunding 

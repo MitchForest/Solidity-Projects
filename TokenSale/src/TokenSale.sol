@@ -16,8 +16,25 @@ contract TokenSale is ERC20("TokenSale", "TS") {
     error MaxSupplyReached();
 
     function decimals() public pure override returns (uint8) {
+        return 10;
+    }
+
+    function _tokenSale(address to, uint256 payment) internal {
+        require (payment >= PRICE_PER_UNIT, "Ether sent is too low");
+
+        uint256 tokens = payment / PRICE_PER_UNIT;
+
+        if (totalSupply() + tokens > MAX_SUPPLY) {
+            revert MaxSupplyReached();
+        }
+        _mint(to, tokens);
+    }
+
+    function buyTokens() external payable {
+        _tokenSale(msg.sender, msg.value);
     }
 
     receive() external payable {
+        _tokenSale(msg.sender, msg.value);
     }
 }
